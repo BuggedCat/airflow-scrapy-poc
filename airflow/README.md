@@ -3,54 +3,49 @@
 ## Setup Project
 
 ```sh
-mkdir -p airflow-scrapy/airflow
-mkdir -p airflow-scrapy/crawler
+git clone git@github.com:BuggedCat/airflow-scrapy-poc.git 
 ```
 
 ## Airflow local
 
 ```sh
+cd airflow
 python -m venv .venv
 source ./.venv/bin/activate
 export AIRFLOW_HOME="$(pwd)"
-mkdir dags
 ```
 
-### Install script
+### Install Python dependencies
 
-```sh
-AIRFLOW_VERSION=2.6.2
-PYTHON_VERSION="$(python --version | cut -d " " -f 2 | cut -d "." -f 1-2)"
-CONSTRAINT_URL="https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-no-providers-${PYTHON_VERSION}.txt"
-pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "${CONSTRAINT_URL}"
-```
+`pip install -r requirements.txt`
 
-### Configure Airflow
-
-To use Docker Operator
+To use Airflow Docker Operator
 
 `pip install apache-airflow-providers-docker`
 
-### Important: **Before running airflow commands run in the airflow root directory**
+### Configure Airflow
+
+**Important: Before running airflow commands run this command in the airflow directory**
 
 `export AIRFLOW_HOME="$(pwd)"`
 
 #### Configure airflow directory and databases
+
+In the `airflow.cfg` file, modify the value of the `sql_alchemy_conn` parameter to an absolute path. Replace it with the appropriate path specific to your `airflow_home`. Here's an example:
+
+`sql_alchemy_conn=sqlite:////home/gian/projects/airflow-scrapy-poc/airflow/airflow.db`
+
+Ensure that you replace `/home/gian/projects/airflow-scrapy-poc/airflow/airflow.db` with the correct absolute path for your `airflow_home`.
+
+Run the following commands in the shell:
 
 ```
 airflow db init
 airflow db check
 ```
 
-On the `airflow.cfg` file change this line from True to False
+#### Create an airflow user
 
-`load_examples = False`
-
-And change this line to your `airflow.db` path
-
-`sql_alchemy_conn = sqlite:////home/user/your/airflow_home/path/airflow.db`
-
-#### Create user
 ```
 airflow users create --username admin \
     --password admin \
@@ -62,29 +57,50 @@ airflow users create --username admin \
 
 #### Running Airflow
 
-Open two terminal windows and run:
+Open two terminal windows/tabs go to your airflow home path and run:
 
 ```sh
 # Start Webserver on terminal 1
-cd <your AIRFLOW_HOME path>
 export AIRFLOW_HOME="$(pwd)"
 airflow webserver
 ```
 
 ```sh
 # Start Webserver on terminal 2
-cd <your AIRFLOW_HOME path>
 export AIRFLOW_HOME="$(pwd)"
 airflow scheduler
 ```
 
-Go to http://localhost:8080, the `user` and `password` is `admin` and `admin`.
+Go to http://localhost:8080, the `user` and `password` is `admin` and `admin`, you should see the airflow home.
 
-#### Creating the DAG
+![Airflow Web Home](/docs/imgs/airflow_start_page.png "Airflow Web Home")
 
-In the dags folder create a python file `sample_spider.py`
 
-- Replace the placeholder `your_project_path` with the path for the `crawler` project.
+#### The DAG
+
+In the `dags` folder there is a python file `sample_spider.py`
+
+Replace both this lines with the path to the `crawler` project that is in this repo, or the path where you want the data and logs to be stored.
+
+```python
+docker_task = DockerOperator(
+    ...
+    mounts=[
+        Mount(
+            source="<your_project_path>/crawler/data",
+            target="/code/data",
+            type="bind",
+        ),
+        Mount(
+            source="<your_project_path>/crawler/logs",
+            target="/code/logs",
+            type="bind",
+        ),
+    ],
+)
+```
+
+The `source` parameter is the location from which you will mount the `target` path inside the container. In the case of the crawler container, it stores the logs and data internally at `/code/{logs, data}`, which is why it is pointing to those paths instead of the actual path of the `crawler` project. If you want to change this behavior, you can modify the Dockerfile and the Spider python file in the `crawler` project.
 
 ```python
 from datetime import datetime
@@ -131,3 +147,7 @@ with DAG(
 
     docker_task
 ```
+
+### Running the DAG
+
+Before running the DAG building the dockerfile project is needed
