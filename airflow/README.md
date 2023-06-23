@@ -73,7 +73,7 @@ airflow scheduler
 
 Go to http://localhost:8080, the `user` and `password` is `admin` and `admin`, you should see the airflow home.
 
-![Airflow Web Home](airflow/docs/imgs/airflow_start_page.png "Airflow Web Home")
+![Airflow Web Home](docs/imgs/airflow_start_page.png "Airflow Web Home")
 
 
 #### The DAG
