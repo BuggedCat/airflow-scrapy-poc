@@ -1,0 +1,49 @@
+[tool.poetry]
+name = "crawler"
+version = "0.1.0"
+description = ""
+authors = ["Giancarlo Lester <gatobugado.dev@gmail.com>"]
+readme = "README.md"
+# packages = [{include = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+scrapy = "^2.9.0"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+ruff = "^0.0.275"
+mypy = "^1.4.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.ruff]
+extend-exclude = ['.venv', '.ruff_cache', '.mypy_cache', '.vscode']
+ignore = []
+line-length = 100
+select = ['E', 'F', 'W']
+
+
+[tool.black]
+line-length = 100
+target-version = ['py310']
+include = '\.pyi?$'
+extend-exclude = '''
+# A regex preceded with ^/ will apply only to files and directories
+# in the root of the project.
+(
+    | .venv
+    | .vscode
+    | .ruff_cache
+    | .mypy_cache
+)
+'''
+
+[tool.mypy]
+ignore_missing_imports=true
+disable_error_code="method-assign"
+check_untyped_defs=true

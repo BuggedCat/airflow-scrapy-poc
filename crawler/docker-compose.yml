@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  scrapy-airlfow:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: scrapy-airlfow
+    env_file:
+      - .env
+    environment:
+      - SPIDER_NAME=sample_spider
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./data:/code/data
+      - ./logs:/code/logs
