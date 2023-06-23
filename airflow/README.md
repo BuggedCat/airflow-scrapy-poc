@@ -10,7 +10,6 @@ mkdir -p airflow-scrapy/crawler
 ## Airflow local
 
 ```sh
-cd airflow-scrapy/airflow
 python -m venv .venv
 source ./.venv/bin/activate
 export AIRFLOW_HOME="$(pwd)"
@@ -43,9 +42,13 @@ airflow db init
 airflow db check
 ```
 
-On the airflow.cfg file change this line from True to False
+On the `airflow.cfg` file change this line from True to False
 
 `load_examples = False`
+
+And change this line to your `airflow.db` path
+
+`sql_alchemy_conn = sqlite:////home/user/your/airflow_home/path/airflow.db`
 
 #### Create user
 ```
@@ -63,16 +66,68 @@ Open two terminal windows and run:
 
 ```sh
 # Start Webserver on terminal 1
-cd <your airflow home path>
+cd <your AIRFLOW_HOME path>
 export AIRFLOW_HOME="$(pwd)"
 airflow webserver
 ```
 
 ```sh
 # Start Webserver on terminal 2
-cd <your airflow home path>
+cd <your AIRFLOW_HOME path>
 export AIRFLOW_HOME="$(pwd)"
 airflow scheduler
 ```
 
 Go to http://localhost:8080, the `user` and `password` is `admin` and `admin`.
+
+#### Creating the DAG
+
+In the dags folder create a python file `sample_spider.py`
+
+- Replace the placeholder `your_project_path` with the path for the `crawler` project.
+
+```python
+from datetime import datetime
+
+from airflow import DAG
+from airflow.providers.docker.operators.docker import DockerOperator
+from docker.types import Mount
+
+default_args = {
+    "start_date": datetime(2023, 1, 1),
+    "depends_on_past": False,
+}
+
+SPIDER_NAME = "sample_spider"
+
+with DAG(
+    "scrapy_docker",
+    default_args=default_args,
+    schedule_interval=None,
+    catchup=False,
+) as dag:
+    docker_task = DockerOperator(
+        task_id="run_my_docker_container",
+        image="crawler-scrapy-airlfow",
+        api_version="auto",
+        auto_remove="never",
+        command=f"scrapy crawl {SPIDER_NAME}",
+        dag=dag,
+        docker_url="unix://var/run/docker.sock",
+        environment={"LOG_LEVEL": "INFO"},
+        mounts=[
+            Mount(
+                source="<your_project_path>/crawler/data",
+                target="/code/data",
+                type="bind",
+            ),
+            Mount(
+                source="<your_project_path>/crawler/logs",
+                target="/code/logs",
+                type="bind",
+            ),
+        ],
+    )
+
+    docker_task
+```

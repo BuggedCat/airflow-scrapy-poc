@@ -1,10 +1,9 @@
-# username: admin  password: zR5sTcwsDNpawGpk
-
 from datetime import datetime
+
+from docker.types import Mount
 
 from airflow import DAG
 from airflow.providers.docker.operators.docker import DockerOperator
-from docker.types import Mount
 
 default_args = {
     "start_date": datetime(2023, 1, 1),
@@ -30,12 +29,12 @@ with DAG(
         environment={"LOG_LEVEL": "INFO"},
         mounts=[
             Mount(
-                source="/home/gian/projects/airflow-scrapy/crawler/data",
+                source="/home/gian/projects/airflow-scrapy-poc/crawler/data",
                 target="/code/data",
                 type="bind",
             ),
             Mount(
-                source="/home/gian/projects/airflow-scrapy/crawler/logs",
+                source="/home/gian/projects/airflow-scrapy-poc/crawler/logs",
                 target="/code/logs",
                 type="bind",
             ),

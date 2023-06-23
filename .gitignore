@@ -160,7 +160,8 @@ cython_debug/
 #.idea/
 
 .vscode/
-data/
-logs/
+*.json
 *.log
 *.db
+*.pid
+airflow/logs
